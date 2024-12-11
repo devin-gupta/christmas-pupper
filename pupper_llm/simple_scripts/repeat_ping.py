@@ -34,7 +34,6 @@ class CommandLinePublisher(Node):
             10
         )
         self.get_logger().info('Command Line Publisher Node has started.')
-        self.model = wh.load_model("tiny")
 
     def publish_message(self, message):
         msg = String()
@@ -77,7 +76,7 @@ def create_audio_stream():
     return p, stream
 
 def record_audio():
-    rclpy.init(args=args)
+    rclpy.init()
 
     command_publisher = CommandLinePublisher()
 
