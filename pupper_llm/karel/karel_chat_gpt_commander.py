@@ -55,13 +55,6 @@ class GPT4ConversationNode(Node):
             10
         )
 
-        # vis node
-        self.vis_publisher_ = self.create_publisher(
-            String,
-            'visualization_topic',  # Replace with your topic name for responses
-            10
-        )
-
         self.get_logger().info('GPT-4 conversation node started and waiting for queries...')
 
         # Initialize the text-to-speech engine
@@ -70,6 +63,8 @@ class GPT4ConversationNode(Node):
 
         # Initialize KarelPupper robot control
         self.pupper = karel.KarelPupper()
+        
+        #self.greenlight = false
 
     # TODO: Implement the query_callback method
     # msg is a String message object that contains the user query. You can extract the query using msg.data
@@ -86,33 +81,44 @@ class GPT4ConversationNode(Node):
         response_msg = String()
         response_msg.data = response
 
-        # Publish the response
-        self.publisher_.publish(response_msg)
+        if len(response) > 0:
+            # Publish the response
+            self.publisher_.publish(response_msg)
 
-        # DEBUG LOGGERS
-        self.get_logger().info(f"Received user query: {query}") 
-        self.get_logger().info(f"Published GPT-4 response: {response}")
+            # DEBUG LOGGERS
+            self.get_logger().info(f"Received user query: {query}") 
+            self.get_logger().info(f"Published GPT-4 response: {response}")
 
-        
-        # Play the response through the speaker with the play_response method
-        self.play_response(response)
-        # Parse and execute robot commands if present with the execute_robot_command method
-        self.execute_robot_command(response)
+            
+            # Play the response through the speaker with the play_response method
+            self.play_response(response)
+            # Parse and execute robot commands if present with the execute_robot_command method
+            self.execute_robot_command(response)
 
     def get_gpt4_response(self, query):
         self.get_logger().info(f"query: {query}")
         try:
             # Making the API call to GPT-4 using OpenAI's Python client
             prompt = '''
-            You are a walking assistant that translates human language into an array of KarelPupper commands. When given instructions,
-            use the TurnRight or TurnLeft tools for rotation commands, Forward, Backward or Stop tools for movement controls and an optional Bark tool if appropiate.
-            This could include multiple of each command. For example, with input 'Pupper walk 3 steps forward' you can do: 
-            Forward, Forward, Forward, Bark.
+            You are a walking assistant that translates human language into an array of KarelPupper commands. 
+            
+            You are always playing "Santa Says". When playing this game you only respond to commands that start with "Santa Says".
+            If a command from the user does not begin with "Santa Says" do nothing and wait for a proper command.
+
+            When given instructions, use the TurnRight or TurnLeft tools for rotation commands, Forward,
+            Backward or Stop tools for movement controls and an optional Bark tool if appropiate.
+            This could include multiple of each command. \n
+
+            For example, with input 'Pupper walk 3 steps forward' you would output: Forward, Forward, Forward, Bark.
+            
             '''
-            response = client.chat.completions.create(model="gpt-4",  # Model identifier, assuming GPT-4 is used
+            complete_query = f"This is the user's query: {query} \n Output the KarelPupper commands here:"
+            print(complete_query)
+            response = client.chat.completions.create(model="gpt-4o",  # Model identifier, assuming GPT-4 is used
+               
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": query}
+                {"role": "user", "content": complete_query}
             ],
             tools=tools,
             max_tokens=150)  # Adjust token limit based on your requirement
@@ -129,10 +135,7 @@ class GPT4ConversationNode(Node):
 
             # Extract the assistant's reply from the response
             # gpt4_response = response.choices[0].message.content
-            if len(functions_called) > 0:
-                result = "Ok, I will " + " ".join(functions_called)
-            else:
-                result = 'play a game with me'
+            result = " ".join(functions_called)
             self.get_logger().info(f"result {result}")
             return result
 
@@ -159,25 +162,17 @@ class GPT4ConversationNode(Node):
                 self.pupper.move()
             case "turnleft":
                 print('pupper turn left')
-                vis_resp = String()
-                vis_resp.data = 'look_left'
-                self.vis_publisher_.publish(vis_resp)
                 self.pupper.turn_left()
             case "turnright":
-                vis_resp = String()
-                vis_resp.data = 'look_right'
-                self.vis_publisher_.publish(vis_resp)
                 self.pupper.turn_right()
             case "bark":
                 print('pupper barking!')
-                vis_resp = String()
-                vis_resp.data = 'blink'
-                self.vis_publisher_.publish(vis_resp)
-                self.vis_publisher_.publish(vis_resp)
                 self.pupper.bark()
             case "backward":
                 print('pupper backward')
                 self.pupper.move()
+            case _:
+                print('ignoring')
 
 def main(args=None):
     rclpy.init(args=args)
