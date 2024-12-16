@@ -20,6 +20,7 @@ To set up and run this project, you'll need the following:
    - `std_msgs` (ROS standard messages)
    - `pyttsx3` (Text-to-speech engine)
    - `openai` (for GPT-4 API integration)
+   - `webrtcvad` (for voice activity detection)
    - `karel` (KarelPupper robot library)
    - `pydantic` (for data validation and modeling)
 
