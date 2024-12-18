@@ -70,7 +70,7 @@ Follow these steps to install dependencies:
 ## Demo
 
 ![Demo Picture](path/to/demo_image.jpg)
-[Link to Demo Video](https://www.youtube.com/watch?v=demo)
+[Link to Demo Video](https://drive.google.com/file/d/1nlXjhRQgPHLKd-VuCjGQDDC8AKv6SGLi/view?resourcekey)
 
 ## Presentation Slides
 
